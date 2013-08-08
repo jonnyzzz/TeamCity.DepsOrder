@@ -44,6 +44,7 @@
             <a data-build="${it.externalId}" data-ref="${it.reference}"><c:out value="${it.name}"/></a>
           </c:forEach>
         </div>
+        <span class="smallNote">Write new-line separated order of dependent build configurations. It's better to use references to make sure those settings survive external IDs rename</span>
       </td>
     </tr>
   </c:otherwise>

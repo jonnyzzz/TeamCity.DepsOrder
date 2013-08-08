@@ -19,16 +19,26 @@ package jetbrains.teamcity.depsOrder.server
 import java.io.File
 import org.apache.log4j.Logger
 import jetbrains.buildServer.web.openapi.PluginDescriptor
+import java.util.LinkedHashSet
+import com.google.common.base.Joiner
 
 /**
  * Created 08.08.13 18:32
  * @author Eugene Petrenko (eugene.petrenko@jetbrains.com)
  */
 
-public fun File.div(child : String) : File = File(this, child)
+public inline fun File.div(child : String) : File = File(this, child)
 
 //we define this category to have plugin logging without logger configs patching
-inline fun log4j<T>(clazz : Class<T>) : Logger = Logger.getLogger("jetbrains.buildServer.${clazz.getName()}")!!
+public inline fun log4j<T>(clazz : Class<T>) : Logger = Logger.getLogger("jetbrains.buildServer.${clazz.getName()}")!!
 
-inline fun PluginDescriptor.div(s : String) = this.getPluginResourcesPath(s)
-inline fun String.div(s : String) = this + "/" + s
+public inline fun PluginDescriptor.div(s : String) : String = this.getPluginResourcesPath(s)
+public inline fun String.div(s : String) : String = this + "/" + s
+
+public inline fun <T> Collection<T>.minus(other : Collection<T>) : Set<T> {
+  val tmp = LinkedHashSet(this)
+  tmp.removeAll(other)
+  return tmp
+}
+
+public inline fun <T> Collection<T>.asString(sep : String = ",") : String = Joiner.on(sep)!!.join(this)!!

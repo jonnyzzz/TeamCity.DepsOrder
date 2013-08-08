@@ -38,7 +38,7 @@ public class Paths(val context : PluginDescriptor) {
 }
 
 public class OrderingFeature(val paths : Paths) : BuildFeature() {
-  public override fun getType(): String = "teamcity.depsOrder"
+  public override fun getType(): String = Constants().featureId
   public override fun getDisplayName(): String = "Order Dependencies"
   public override fun getEditParametersUrl(): String = paths.controller
 }
@@ -49,6 +49,7 @@ public data class DependencyEntry(val externalId: String, val name: String) {
 
 public class Constants {
   public val items : String = "items"
+  public val featureId : String = "teamcity.depsOrder"
 }
 
 public class FeatureControllerRegister(web : WebControllerManager, paths: Paths, controller : FeatureController) {{

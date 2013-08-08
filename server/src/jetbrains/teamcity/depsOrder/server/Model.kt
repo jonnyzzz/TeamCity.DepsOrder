@@ -26,7 +26,6 @@ import jetbrains.buildServer.serverSide.BuildPromotionManager
 import com.google.common.base.Joiner
 import org.apache.log4j.Logger
 import jetbrains.buildServer.serverSide.SBuildType
-import jetbrains.buildServer.serverSide.CustomDataStorage
 
 /**
  * Created 08.08.13 18:10
@@ -39,10 +38,8 @@ data class Settings(val order: Array<String>?)
 public class SettingsManager(val projects: ProjectManager) {
   class object {
     public val LOG: Logger = log4j(javaClass<SettingsManager>())
+    public val featureId : String = ui.Constants().featureId
   }
-
-  private val SETTINGS_DIR = "teamcity.jonnyzzz.depsOrder"
-  private val SETTINGS_KEY = "order"
 
   public fun forBuild(build: QueuedBuildInfo): List<ExternalId> {
     val internalId = build.getBuildConfiguration().getId()
@@ -51,22 +48,29 @@ public class SettingsManager(val projects: ProjectManager) {
     return forBuild(bt)
   }
 
-  public fun forBuild(bt: SBuildType): List<ExternalId> = with(bt.store()) {
-    order.map { ExternalId(it) }
+  public fun forBuild(bt: SBuildType ?): List<ExternalId> {
+    if (bt == null) return noOrder()
+    val feature = bt.getResolvedSettings().getBuildFeatures().find { it.getType() == featureId }
+    if (feature == null) return noOrder()
+    if (!bt.isEnabled(feature.getId())) return noOrder()
+
+    val buildTypeIds = (feature.getParameters()[ui.Constants().items]?: "")
+            .split("[\\s,\n]+")
+            .map { it.trim() }
+            .filterNot { it.length() == 0 }
+
+    return buildTypeIds
+            .map { projects.findBuildTypeByExternalId(it)}
+            .filterNotNull()
+            .map { ExternalId(it.getExternalId())}
   }
 
-  public fun updateBuild(build: SBuildType, steps: List<ExternalId>) {
-    with(build.store()) {
-      order = steps.map { it.id }.toArray(array<String>())
-    }
-  }
-
-  private fun SBuildType.store() = BuildTypeStorage(this)
   private fun noOrder() = listOf<ExternalId>()
 }
 
 
 public class OrderManager(val settings: SettingsManager,
+                          val projects: ProjectManager,
                           val promotions: BuildPromotionManager) : StartingBuildAgentsFilter {
   public override fun filterAgents(ctx: AgentsFilterContext): AgentsFilterResult {
     val result = AgentsFilterResult()
@@ -76,24 +80,58 @@ public class OrderManager(val settings: SettingsManager,
 
   private fun compute(ctx: AgentsFilterContext, result: AgentsFilterResult) {
     val build = ctx.getStartingBuild()
-    val order = HashSet(settings.forBuild(build))
-    if (order.isEmpty()) return
-
     val promoId = build.getBuildPromotionInfo().getId()
     val promo = promotions.findPromotionById(promoId)
     if (promo == null) return
 
-    val buildsToWait = promo
-            .getDependencies()
+    val allWhoNeedsMyBuild = promo
+            .getDependedOnMe()
             .filterNotNull()
-            .map { it.getDependOn() }
-            .filterNotNull()
-            .filter { order.contains(ExternalId(it.getBuildTypeId())) }
-            .filterNot { it.getAssociatedBuild()?.isFinished() }
-            .map { it.getBuildType() }
-            .filterNotNull()
-            .map { it.getFullName() }
+            .map { it.getDependent() }
 
-    result.setWaitReason { "Waits for build to complete: " + Joiner.on(", ")!!.join(buildsToWait) }
+    //fallback
+    if (allWhoNeedsMyBuild.isEmpty()) return
+
+    fun selectBuildsToWait(order : List<ExternalId>) : List<ExternalId> {
+      val tmp = order.takeWhile { it != ExternalId(promo.getBuildTypeExternalId()) }
+      //so there were no our build inside
+      if (tmp == order) return arrayListOf<ExternalId>()
+      //it was there
+      return tmp
+    }
+
+    val allBuildTypeIdsToWaitFor = HashSet(
+            allWhoNeedsMyBuild
+                    .map { settings.forBuild(it.getBuildType()) }
+                    .filterNot { it.isEmpty() }
+                    .flatMap { selectBuildsToWait(it) }
+            )
+
+    //fallback
+    if (allBuildTypeIdsToWaitFor.isEmpty()) return
+
+    val tops = promo.findTops()
+    if (tops == null) return
+
+    val allFinishedBuildsExternalIds = tops.flatMap { it
+            .getAllDependencies()
+            .filterNotNull()
+            .map { it.getAssociatedBuild() }
+            .filterNotNull()
+            .filter { it.isFinished() }
+            .map { ExternalId(it.getBuildTypeExternalId()) }
+    }
+
+    val actualBuildsToWaitFor = allBuildTypeIdsToWaitFor - allFinishedBuildsExternalIds
+    if (allBuildTypeIdsToWaitFor.isEmpty()) return
+
+    val buildNamesToWait = actualBuildsToWaitFor
+              .map { projects.findBuildTypeByExternalId(it.id)}
+              .filterNotNull()
+              .map { it.getFullName() }
+              .sort()
+              .asString(", ")
+
+    result.setWaitReason { "[Ordered Dependencies] Waits for build to complete: " + buildNamesToWait }
   }
 }

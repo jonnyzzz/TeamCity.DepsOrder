@@ -12,4 +12,12 @@
   <bean class="bean class fully qualified name"/>
   -->
 
+  <bean class="jetbrains.teamcity.depsOrder.server.OrderManager"/>
+  <bean class="jetbrains.teamcity.depsOrder.server.SettingsManager"/>
+
+  <bean class="jetbrains.teamcity.depsOrder.server.ui.OrderingFeature"/>
+  <bean class="jetbrains.teamcity.depsOrder.server.ui.FeatureController"/>
+  <bean class="jetbrains.teamcity.depsOrder.server.ui.FeatureControllerRegister"/>
+  <bean class="jetbrains.teamcity.depsOrder.server.ui.Paths"/>
+
 </beans>

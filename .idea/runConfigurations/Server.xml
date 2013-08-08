@@ -26,7 +26,7 @@
       <option name="myExternalizedOptions" value="&#13;&#10;additional-options2=onexit\=snapshot&#13;&#10;" />
     </RunnerSettings>
     <RunnerSettings RunnerId="Run" />
-    <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
+    <ConfigurationWrapper RunnerId="Cover" VM_VAR="JAVA_OPTS">
       <option name="USE_ENV_VARIABLES" value="true" />
       <STARTUP>
         <option name="USE_DEFAULT" value="true" />
@@ -41,7 +41,7 @@
         <option name="PROGRAM_PARAMETERS" value="" />
       </SHUTDOWN>
     </ConfigurationWrapper>
-    <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Debug">
+    <ConfigurationWrapper RunnerId="Debug" VM_VAR="JAVA_OPTS">
       <option name="USE_ENV_VARIABLES" value="true" />
       <STARTUP>
         <option name="USE_DEFAULT" value="true" />
@@ -71,7 +71,7 @@
         <option name="PROGRAM_PARAMETERS" value="" />
       </SHUTDOWN>
     </ConfigurationWrapper>
-    <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Run">
+    <ConfigurationWrapper RunnerId="Run" VM_VAR="JAVA_OPTS">
       <option name="USE_ENV_VARIABLES" value="true" />
       <STARTUP>
         <option name="USE_DEFAULT" value="true" />

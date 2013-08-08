@@ -23,9 +23,9 @@ import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo
 import jetbrains.buildServer.serverSide.ProjectManager
 import java.util.HashSet
 import jetbrains.buildServer.serverSide.BuildPromotionManager
-import com.google.common.base.Joiner
 import org.apache.log4j.Logger
 import jetbrains.buildServer.serverSide.SBuildType
+import jetbrains.buildServer.serverSide.TeamCityProperties
 
 /**
  * Created 08.08.13 18:10
@@ -72,9 +72,15 @@ public class SettingsManager(val projects: ProjectManager) {
 public class OrderManager(val settings: SettingsManager,
                           val projects: ProjectManager,
                           val promotions: BuildPromotionManager) : StartingBuildAgentsFilter {
+  class object {
+    public val LOG: Logger = log4j(javaClass<SettingsManager>())
+  }
+
   public override fun filterAgents(ctx: AgentsFilterContext): AgentsFilterResult {
     val result = AgentsFilterResult()
-    compute(ctx, result)
+    if (TeamCityProperties.getBooleanOrTrue("teamcity.plugin.depsOrder.enabled")) {
+      compute(ctx, result)
+    }
     return result
   }
 

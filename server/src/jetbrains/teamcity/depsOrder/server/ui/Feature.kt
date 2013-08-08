@@ -41,6 +41,10 @@ public class OrderingFeature(val paths : Paths) : BuildFeature() {
   public override fun getType(): String = Constants().featureId
   public override fun getDisplayName(): String = "Order Dependencies"
   public override fun getEditParametersUrl(): String = paths.controller
+
+  public override fun describeParameters(params: Map<String, String>): String {
+    return "Builds order: " + (params[Constants().items]?:"").replaceAll("[\r\n]+"," ").trim()
+  }
 }
 
 public data class DependencyEntry(val externalId: String, val name: String) {

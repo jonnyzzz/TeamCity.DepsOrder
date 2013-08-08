@@ -25,7 +25,7 @@
 </tr>
 <tr>
   <td colspan="2">
-    <props:multilineProperty name="${bean.items}" linkTitle="Select Dependencies Order" cols="60" rows="${fn:length(items)+2}" expanded="${true}"/>
+    <props:multilineProperty name="${bean.items}" linkTitle="Select Dependencies Order" cols="70" rows="${fn:length(items)+2}" expanded="${true}"/>
   </td>
 </tr>
 

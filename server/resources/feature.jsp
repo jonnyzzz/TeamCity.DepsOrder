@@ -52,7 +52,6 @@
 <script type="text/javascript">
   jQuery(function($) {
     $(".depsOrderPossibleItems").on("click", "a", function() {
-      alert($(this).text());
       var el = $("#${bean.items}");
       el.val(el.val() + "\n" + $(this).data("ref"));
     })

@@ -55,7 +55,7 @@ public class SettingsManager(val projects: ProjectManager) {
     if (!bt.isEnabled(feature.getId())) return noOrder()
 
     val buildTypeIds = (feature.getParameters()[ui.Constants().items]?: "")
-            .split("[\\s,\n]+")
+            .split("[\\s,\\n]+")
             .map { it.trim() }
             .filterNot { it.length() == 0 }
 

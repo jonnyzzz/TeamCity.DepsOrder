@@ -43,7 +43,7 @@ public class OrderingFeature(val paths : Paths) : BuildFeature() {
   public override fun getEditParametersUrl(): String = paths.controller
 
   public override fun describeParameters(params: Map<String, String>): String {
-    return "Builds order: " + (params[Constants().items]?:"").replaceAll("[\r\n]+"," ").trim()
+    return "Builds order:\n" + (params[Constants().items]?:"").replaceAll("[\r\n]+"," ").trim()
   }
 }
 

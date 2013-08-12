@@ -19,7 +19,6 @@ package jetbrains.teamcity.depsOrder.server
 import jetbrains.buildServer.serverSide.buildDistribution.StartingBuildAgentsFilter
 import jetbrains.buildServer.serverSide.buildDistribution.AgentsFilterContext
 import jetbrains.buildServer.serverSide.buildDistribution.AgentsFilterResult
-import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo
 import jetbrains.buildServer.serverSide.ProjectManager
 import java.util.HashSet
 import jetbrains.buildServer.serverSide.BuildPromotionManager
@@ -41,21 +40,29 @@ public class SettingsManager(val projects: ProjectManager) {
     public val featureId : String = ui.Constants().featureId
   }
 
-  public fun forBuild(build: QueuedBuildInfo): List<ExternalId> {
-    val internalId = build.getBuildConfiguration().getId()
-    val bt = projects.findBuildTypeById(internalId)
-    if (bt == null) return noOrder()
-    return forBuild(bt)
-  }
-
-  public fun forBuild(bt: SBuildType ?): List<ExternalId> {
+  public fun forBuild(bt: SBuildType?, waitingBuild : ExternalId): List<ExternalId> {
     if (bt == null) return noOrder()
     val feature = bt.getResolvedSettings().getBuildFeatures().find { it.getType() == featureId }
     if (feature == null) return noOrder()
     if (!bt.isEnabled(feature.getId())) return noOrder()
 
     val buildTypeIds = (feature.getParameters()[ui.Constants().items]?: "")
-            .split("[\\s,\\n]+")
+            .split("[\r\n]+")
+            .map { it.trim() }
+            .filterNot { it.length() == 0 }
+            .map {
+              val line = it.split("=>")
+              when {
+                line.size == 1 -> line[0]
+                line.size == 2 -> when {
+                  line[0].trim().equalsIgnoreCase(waitingBuild.id) -> line[1]
+                  line[0].trim().equalsIgnoreCase("*") -> line[1]
+                  else -> null
+                }
+                else -> null
+              }
+            }
+            .filterNotNull()
             .map { it.trim() }
             .filterNot { it.length() == 0 }
 
@@ -98,19 +105,8 @@ public class OrderManager(val settings: SettingsManager,
     //fallback
     if (allWhoNeedsMyBuild.isEmpty()) return
 
-    fun selectBuildsToWait(order : List<ExternalId>) : List<ExternalId> {
-      val tmp = order.takeWhile { it != ExternalId(promo.getBuildTypeExternalId()) }
-      //so there were no our build inside
-      if (tmp == order) return arrayListOf<ExternalId>()
-      //it was there
-      return tmp
-    }
-
     val allBuildTypeIdsToWaitFor = HashSet(
-            allWhoNeedsMyBuild
-                    .map { settings.forBuild(it.getBuildType()) }
-                    .filterNot { it.isEmpty() }
-                    .flatMap { selectBuildsToWait(it) }
+            allWhoNeedsMyBuild.flatMap { settings.forBuild(it.getBuildType(), ExternalId(promo.getBuildTypeExternalId())) }
             )
 
     //fallback

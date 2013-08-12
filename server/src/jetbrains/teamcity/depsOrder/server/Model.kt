@@ -129,7 +129,7 @@ public class OrderManager(val settings: SettingsManager,
     }
 
     val actualBuildsToWaitFor = allBuildTypeIdsToWaitFor - allFinishedBuildsExternalIds
-    if (allBuildTypeIdsToWaitFor.isEmpty()) return
+    if (actualBuildsToWaitFor.isEmpty()) return
 
     val buildNamesToWait = actualBuildsToWaitFor
               .map { projects.findBuildTypeByExternalId(it.id)}
